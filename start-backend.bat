@@ -14,15 +14,9 @@ if not exist "EasyTeleop-Backend-Python" (
 cd EasyTeleop-Backend-Python
 
 echo Starting main backend service...
-start "Backend Main" python backend.py
-
-timeout /t 2
-
-echo Starting MQTT sync service...
-start "Backend MQTT" python run_mqtt_sync.py
+uv run backend.py
 
 cd ..
 
-echo Backend services started.
-echo Press any key to exit this window (services will continue running)
-pause >nul
+echo Backend service stopped.
+pause

@@ -12,15 +12,10 @@ fi
 cd EasyTeleop-Backend-Python
 
 echo "Starting main backend service..."
-python3 backend.py &
-
-sleep 2
-
-echo "Starting MQTT sync service..."
-python3 run_mqtt_sync.py &
+uv run backend.py
 
 cd ..
 
-echo "Backend services started."
+echo "Backend service stopped."
 echo "Press Ctrl+C to stop the services"
 wait
