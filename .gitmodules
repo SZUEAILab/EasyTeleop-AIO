@@ -1,0 +1,9 @@
+[submodule "EasyTeleop-Node"]
+	path = EasyTeleop-Node
+	url = https://github.com/SZUEAILab/EasyTeleop-Node.git
+[submodule "EasyTeleop-Backend-Python"]
+	path = EasyTeleop-Backend-Python
+	url = https://github.com/SZUEAILab/EasyTeleop-Backend-Python.git
+[submodule "EasyTeleopFrontend"]
+	path = EasyTeleopFrontend
+	url = https://github.com/SZUEAILab/EasyTeleopFrontend.git
