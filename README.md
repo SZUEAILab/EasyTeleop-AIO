@@ -17,6 +17,7 @@ EasyTeleop-AIO 是一个为 EasyTeleop 系统提供一键部署功能的集成�
 - pnpm 包管理器
 - uv Python包管理工具
 - 支持的操作系统：Windows、Linux、macOS
+- Docker（用于运行 MQTT 服务）
 
 ## 快速开始
 
@@ -49,7 +50,29 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
-### 3. 启动服务
+### 3. 安装和启动 MQTT 服务
+
+系统使用 EMQX 作为 MQTT 消息代理服务，可以使用提供的脚本一键安装和启动：
+
+#### Windows系统：
+```cmd
+install-mqtt.bat
+```
+
+#### Linux/macOS系统：
+```bash
+chmod +x install-mqtt.sh
+./install-mqtt.sh
+```
+
+该脚本会自动拉取 EMQX Enterprise 6.0.1 镜像并启动容器，映射以下端口：
+- 1883: MQTT 端口
+- 8083: WebSocket 端口
+- 8084: SSL WebSocket 端口
+- 8883: MQTT SSL 端口
+- 18083: Dashboard 管理界面端口
+
+### 4. 启动服务
 
 项目包含独立的服务启动脚本：
 
@@ -77,6 +100,8 @@ chmod +x start-node.sh start-backend.sh start-frontend.sh
 ## 访问界面
 
 前端服务默认在 `http://localhost:3000` 运行，启动后可通过浏览器访问。
+
+MQTT Dashboard 默认在 `http://localhost:18083` 运行，用户名和密码默认都是 `admin`。
 
 ## 故障排除
 
