@@ -8,5 +8,5 @@
 	path = EasyTeleopFrontend
 	url = https://github.com/SZUEAILab/EasyTeleopFrontend.git
 [submodule "HDF5DataVisualize"]
-	path = EHDF5DataVisualize
+	path = HDF5DataVisualize
 	url = https://github.com/SZUEAILab/HDF5DataVisualize.git
