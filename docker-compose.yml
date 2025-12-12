@@ -40,6 +40,7 @@ services:
       context: ./EasyTeleop-Node
       dockerfile: Dockerfile
     container_name: easyteleop-node
+    privileged: true  # <--- 关键：开启特权模式
     depends_on:
       backend:
         condition: service_started
@@ -52,7 +53,6 @@ services:
       - VIEW_HDF5_URL=http://hdf5:5000
     volumes:
       - ./EasyTeleop-Node/datasets:/app/datasets
-      - /dev:/dev
     restart: unless-stopped
 
   frontend:
