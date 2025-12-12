@@ -52,6 +52,7 @@ services:
       - VIEW_HDF5_URL=http://hdf5:5000
     volumes:
       - ./EasyTeleop-Node/datasets:/app/datasets
+      - /dev:/dev
     restart: unless-stopped
 
   frontend:
