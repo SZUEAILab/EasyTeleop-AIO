@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./EasyTeleop-Backend-Python
+      dockerfile: Dockerfile
+    container_name: easyteleop-backend
+    depends_on:
+      mqtt:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./EasyTeleop-Backend-Python/data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DB_DIR=/app/data
+      - MQTT_BROKER=mqtt
+      - MQTT_PORT=1883
+
+  mqtt:
+    image: emqx/emqx:5.3.1
+    container_name: easyteleop-mqtt
+    ports:
+      - "1883:1883"
+      - "8083:8083"
+      - "8084:8084"
+      - "8883:8883"
+      - "18083:18083"
+    healthcheck:
+      test: ["CMD", "emqx", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  node:
+    build:
+      context: ./EasyTeleop-Node
+      dockerfile: Dockerfile
+    container_name: easyteleop-node
+    depends_on:
+      backend:
+        condition: service_started
+      mqtt:
+        condition: service_healthy
+    environment:
+      - BACKEND_URL=http://backend:8000
+      - WEBSOCKET_URI=ws://backend:8000/ws/rpc
+      - MQTT_BROKER=mqtt
+      - VIEW_HDF5_URL=http://hdf5:5000
+    volumes:
+      - ./EasyTeleop-Node/datasets:/app/datasets
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./EasyTeleopFrontend
+      dockerfile: Dockerfile
+    container_name: easyteleop-frontend
+    depends_on:
+      backend:
+        condition: service_started
+      mqtt:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_BACKEND_URL=http://backend:8000
+      - NEXT_PUBLIC_MQTT_URL=ws://mqtt:8083/mqtt
+      - NEXT_PUBLIC_MQTT_PASSWORD=public
+      - NEXT_PUBLIC_MQTT_USERNAME=admin
+
+  hdf5:
+    build:
+      context: ./HDF5DataVisualize
+      dockerfile: Dockerfile
+    container_name: easyteleop-hdf5
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./HDF5DataVisualize/databases:/app/databases
