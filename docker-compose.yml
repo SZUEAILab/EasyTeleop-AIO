@@ -13,11 +13,13 @@ services:
       - "8000:8000"
     volumes:
       - ./EasyTeleop-Backend-Python/data:/app/data
+      - ./HDF5DataVisualize/databases:/app/databases
     environment:
       - PYTHONUNBUFFERED=1
       - DB_DIR=/app/data
       - MQTT_BROKER=mqtt
       - MQTT_PORT=1883
+      - HDF5_ROOT=/app/databases
 
   mqtt:
     image: emqx/emqx:5.3.1
@@ -50,10 +52,11 @@ services:
       - BACKEND_URL=http://backend:8000
       - WEBSOCKET_URI=ws://backend:8000/ws/rpc
       - MQTT_BROKER=mqtt
-      - VIEW_HDF5_URL=http://hdf5:5000
+      - VIEW_HDF5_URL=http://backend:8000
     volumes:
       - ./EasyTeleop-Node/datasets:/app/datasets
       - ./EasyTeleop-Node/data:/app/data
+      - /dev:/dev
     restart: unless-stopped
 
   frontend:
@@ -73,13 +76,3 @@ services:
       - NEXT_PUBLIC_MQTT_URL=ws://mqtt:8083/mqtt
       - NEXT_PUBLIC_MQTT_PASSWORD=public
       - NEXT_PUBLIC_MQTT_USERNAME=admin
-
-  hdf5:
-    build:
-      context: ./HDF5DataVisualize
-      dockerfile: Dockerfile
-    container_name: easyteleop-hdf5
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./HDF5DataVisualize/databases:/app/databases
