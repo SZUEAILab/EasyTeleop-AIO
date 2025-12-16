@@ -5,6 +5,7 @@ services:
     build:
       context: ./EasyTeleop-Backend-Python
       dockerfile: Dockerfile
+    image: easyteleop/backend
     container_name: easyteleop-backend
     depends_on:
       mqtt:
@@ -39,6 +40,7 @@ services:
     build:
       context: ./EasyTeleop-Node
       dockerfile: Dockerfile
+    image: easyteleop/node
     container_name: easyteleop-node
     privileged: true  # <--- 关键：开启特权模式
     depends_on:
@@ -61,28 +63,50 @@ services:
       context: ./EasyTeleopFrontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://${HOST_IP}:8000
-        NEXT_PUBLIC_MQTT_URL: ws://${HOST_IP}:8083/mqtt
+        NEXT_PUBLIC_API_URL: /api #使用绝对路径避免指定host和端口
+        NEXT_PUBLIC_MQTT_URL: # 留空使用默认值:windows.localhost:8083/mqtt
         NEXT_PUBLIC_MQTT_PASSWORD: public
         NEXT_PUBLIC_MQTT_USERNAME: admin
+    image: easyteleop/frontend
     container_name: easyteleop-frontend
     depends_on:
       backend:
         condition: service_started
       mqtt:
         condition: service_healthy
+    environment:
+      - NEXT_PUBLIC_API_URL=/api
+      - NEXT_PUBLIC_MQTT_URL=
+      - NEXT_PUBLIC_MQTT_PASSWORD=public
+      - NEXT_PUBLIC_MQTT_USERNAME=admin
+
+  gateway:
+    image: nginx:1.25-alpine
+    container_name: easyteleop-gateway
+    depends_on:
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_started
+      mqtt:
+        condition: service_healthy
     ports:
-      - "3000:3000"
-    # environment:
-    #   - NEXT_PUBLIC_API_URL=http://${HOST_IP}:8000
-    #   - NEXT_PUBLIC_MQTT_URL=ws://${HOST_IP}:8083/mqtt
-    #   - NEXT_PUBLIC_MQTT_PASSWORD=public
-    #   - NEXT_PUBLIC_MQTT_USERNAME=admin
+      - "80:80"
+    environment:
+      - API_HOST=backend
+      - API_PORT=8000
+      - FRONT_HOST=frontend
+      - FRONT_PORT=3000
+      - MQTT_HOST=mqtt
+      - MQTT_PORT=8083
+    volumes:
+      - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
 
   hdf5:
     build:
       context: ./HDF5DataVisualize
       dockerfile: Dockerfile
+    image: easyteleop/hdf5
     container_name: easyteleop-hdf5
     ports:
       - "5000:5000"
