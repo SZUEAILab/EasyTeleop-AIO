@@ -1,0 +1,104 @@
+name: Release offline docker tars
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v1.2.3). If empty, uses the ref name."
+        required: false
+        type: string
+      image_repo:
+        description: "Image repo prefix inside tar (default: easyteleop)"
+        required: false
+        type: string
+      skip_pull:
+        description: "Skip pulling dependency images (nginx/emqx)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set vars
+        id: vars
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG_INPUT="${{ inputs.tag }}"
+          if [[ -z "${TAG_INPUT}" ]]; then
+            TAG_INPUT="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=${TAG_INPUT}" >> "$GITHUB_OUTPUT"
+
+          IMAGE_REPO_INPUT="${{ inputs.image_repo }}"
+          if [[ -z "${IMAGE_REPO_INPUT}" ]]; then
+            IMAGE_REPO_INPUT="easyteleop"
+          fi
+          echo "image_repo=${IMAGE_REPO_INPUT}" >> "$GITHUB_OUTPUT"
+
+          if [[ "${{ inputs.skip_pull }}" == "true" ]]; then
+            echo "skip_pull=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip_pull=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and export tarballs
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./export-tars.sh
+
+          args=(
+            --image-repo "${{ steps.vars.outputs.image_repo }}"
+            --tag "${{ steps.vars.outputs.tag }}"
+            --out-dir dist
+            --arch both
+          )
+          if [[ "${{ steps.vars.outputs.skip_pull }}" == "1" ]]; then
+            args+=(--skip-pull)
+          fi
+
+          ./export-tars.sh "${args[@]}"
+
+      - name: Checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd dist && sha256sum *.tar > SHA256SUMS.txt)
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-tars-${{ steps.vars.outputs.tag }}
+          path: |
+            dist/*.tar
+            dist/SHA256SUMS.txt
+
+      - name: Create/Update GitHub Release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: Offline docker tars ${{ steps.vars.outputs.tag }}
+          files: |
+            dist/*.tar
+            dist/SHA256SUMS.txt
+
