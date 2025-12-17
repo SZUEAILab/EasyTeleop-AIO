@@ -61,6 +61,13 @@ jobs:
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Prepare output directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /mnt/dist
+          sudo chown -R "$(id -u)":"$(id -g)" /mnt/dist
+
       - name: Build and export tarballs (per image, per arch)
         shell: bash
         run: |
