@@ -52,20 +52,13 @@ chmod +x deploy.sh
 
 ### 3. 安装和启动 MQTT 服务
 
-系统使用 EMQX 作为 MQTT 消息代理服务，可以使用提供的脚本一键安装和启动：
+系统使用 EMQX 作为 MQTT 消息代理服务，推荐使用 compose 启动 `mqtt` 服务：
 
-#### Windows系统：
-```cmd
-install-mqtt.bat
-```
-
-#### Linux/macOS系统：
 ```bash
-chmod +x install-mqtt.sh
-./install-mqtt.sh
+docker compose up -d mqtt
 ```
 
-该脚本会自动拉取 EMQX Enterprise 6.0.1 镜像并启动容器，映射以下端口：
+服务会映射以下端口：
 - 1883: MQTT 端口
 - 8083: WebSocket 端口
 - 8084: SSL WebSocket 端口
@@ -116,3 +109,37 @@ MQTT Dashboard 默认在 `http://localhost:18083` 运行，用户名和密码默
 ```bash
 git submodule update --remote --merge
 ```
+
+## 多架构镜像（buildx bake）
+
+构建并推送多架构镜像（amd64+arm64）：
+
+```powershell
+$env:IMAGE_REPO="docker.io/<user>"   # 或 "ghcr.io/<org>"
+$env:TAG="v1.0.0"
+docker buildx bake -f docker-bake.hcl multi --push
+```
+
+导出离线 tar 包（每个架构一个 tar，每个 tar 包含全部镜像）：
+
+Windows（CMD，使用 `.bat`）：
+
+```cmd
+export-tars.bat --image-repo easyteleop --tag latest --out-dir dist --arch both
+```
+
+Linux/macOS：
+
+```bash
+chmod +x ./export-tars.sh
+./export-tars.sh --image-repo easyteleop --tag latest --out-dir dist
+```
+
+每个架构的 tar 包包含 6 个镜像：
+
+- `${IMAGE_REPO}/backend:${TAG}-${arch}`
+- `${IMAGE_REPO}/node:${TAG}-${arch}`
+- `${IMAGE_REPO}/frontend:${TAG}-${arch}`
+- `${IMAGE_REPO}/hdf5:${TAG}-${arch}`
+- `nginx:1.25-alpine-${arch}`
+- `emqx/emqx:5.3.1-${arch}`
