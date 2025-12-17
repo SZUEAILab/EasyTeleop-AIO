@@ -61,37 +61,81 @@ jobs:
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and export tarballs
+      - name: Build and export tarballs (per image, per arch)
         shell: bash
         run: |
           set -euo pipefail
-          chmod +x ./export-tars.sh
+          IMAGE_REPO="${{ steps.vars.outputs.image_repo }}"
+          TAG="${{ steps.vars.outputs.tag }}"
+          SKIP_PULL="${{ steps.vars.outputs.skip_pull }}"
 
-          args=(
-            --image-repo "${{ steps.vars.outputs.image_repo }}"
-            --tag "${{ steps.vars.outputs.tag }}"
-            --out-dir dist
-            --arch both
-          )
-          if [[ "${{ steps.vars.outputs.skip_pull }}" == "1" ]]; then
-            args+=(--skip-pull)
+          OUT_DIR="/mnt/dist"
+          mkdir -p "${OUT_DIR}"
+
+          repo_slug="$(echo "${IMAGE_REPO}" | sed -E 's#[^A-Za-z0-9_.-]+#_#g')"
+
+          build_one() {
+            local name="$1"
+            local context="$2"
+            local dockerfile="$3"
+            shift 3
+            local extra_args=("$@")
+
+            for arch in amd64 arm64; do
+              local image="${IMAGE_REPO}/${name}:${TAG}-${arch}"
+              local out="${OUT_DIR}/${repo_slug}-${name}-${TAG}-${arch}.tar"
+
+              docker buildx build \
+                --platform "linux/${arch}" \
+                -t "${image}" \
+                -f "${context}/${dockerfile}" \
+                "${extra_args[@]}" \
+                --output "type=docker,dest=${out}" \
+                "${context}"
+            done
+          }
+
+          # Project images
+          build_one backend "./EasyTeleop-Backend-Python" "Dockerfile"
+          build_one node "./EasyTeleop-Node" "Dockerfile"
+          build_one hdf5 "./HDF5DataVisualize" "Dockerfile"
+          build_one frontend "./EasyTeleopFrontend" "Dockerfile" \
+            --build-arg "NEXT_PUBLIC_API_URL=/api" \
+            --build-arg "NEXT_PUBLIC_MQTT_URL=" \
+            --build-arg "NEXT_PUBLIC_MQTT_USERNAME=admin" \
+            --build-arg "NEXT_PUBLIC_MQTT_PASSWORD=public"
+
+          # Dependency images (pulled one-by-one to reduce disk usage)
+          if [[ "${SKIP_PULL}" != "1" ]]; then
+            deps=(
+              "nginx:1.25-alpine"
+              "emqx/emqx:5.3.1"
+            )
+
+            for dep in "${deps[@]}"; do
+              for arch in amd64 arm64; do
+                docker pull --platform "linux/${arch}" "${dep}"
+                dep_tag="${dep}-${arch}"
+                docker tag "${dep}" "${dep_tag}"
+                docker save -o "${OUT_DIR}/${repo_slug}-$(echo "${dep}" | sed -E 's#[^A-Za-z0-9_.-]+#_#g')-${TAG}-${arch}.tar" "${dep_tag}"
+                docker rmi "${dep_tag}" "${dep}" >/dev/null 2>&1 || true
+              done
+            done
           fi
-
-          ./export-tars.sh "${args[@]}"
 
       - name: Checksums
         shell: bash
         run: |
           set -euo pipefail
-          (cd dist && sha256sum *.tar > SHA256SUMS.txt)
+          (cd /mnt/dist && sha256sum *.tar > SHA256SUMS.txt)
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: offline-tars-${{ steps.vars.outputs.tag }}
           path: |
-            dist/*.tar
-            dist/SHA256SUMS.txt
+            /mnt/dist/*.tar
+            /mnt/dist/SHA256SUMS.txt
 
       - name: Create/Update GitHub Release and upload assets
         uses: softprops/action-gh-release@v2
@@ -99,6 +143,5 @@ jobs:
           tag_name: ${{ steps.vars.outputs.tag }}
           name: Offline docker tars ${{ steps.vars.outputs.tag }}
           files: |
-            dist/*.tar
-            dist/SHA256SUMS.txt
-
+            /mnt/dist/*.tar
+            /mnt/dist/SHA256SUMS.txt
