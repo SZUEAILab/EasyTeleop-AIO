@@ -103,7 +103,8 @@ jobs:
         run: |
           set -euo pipefail
           IMAGE_REPO="${{ needs.prepare-release.outputs.image_repo }}"
-          TAG="${{ needs.prepare-release.outputs.tag }}"
+          # TAG="${{ needs.prepare-release.outputs.tag }}"
+          TAG="latest"
           REPO_SLUG="${{ needs.prepare-release.outputs.repo_slug }}"
           IMAGE="${{ matrix.image }}"
           CONTEXT="${{ matrix.context }}"
@@ -113,7 +114,7 @@ jobs:
             out="/mnt/dist/${REPO_SLUG}-${IMAGE}-${TAG}-${arch}.tar"
             docker buildx build \
               --platform "linux/${arch}" \
-              -t "${IMAGE_REPO}/${IMAGE}:${TAG}-${arch}" \
+              -t "${IMAGE_REPO}/${IMAGE}:${TAG}" \
               -f "${CONTEXT}/${DOCKERFILE}" \
               ${{ matrix.build_args }} \
               --output "type=docker,dest=${out}" \
