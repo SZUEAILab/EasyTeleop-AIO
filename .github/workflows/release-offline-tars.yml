@@ -103,18 +103,18 @@ jobs:
         run: |
           set -euo pipefail
           IMAGE_REPO="${{ needs.prepare-release.outputs.image_repo }}"
-          # TAG="${{ needs.prepare-release.outputs.tag }}"
-          TAG="latest"
+          RELEASE_TAG="${{ needs.prepare-release.outputs.tag }}"
+          IMAGE_TAG="latest"
           REPO_SLUG="${{ needs.prepare-release.outputs.repo_slug }}"
           IMAGE="${{ matrix.image }}"
           CONTEXT="${{ matrix.context }}"
           DOCKERFILE="${{ matrix.dockerfile }}"
 
           for arch in amd64 arm64; do
-            out="/mnt/dist/${REPO_SLUG}-${IMAGE}-${TAG}-${arch}.tar"
+            out="/mnt/dist/${REPO_SLUG}-${IMAGE}-${RELEASE_TAG}-${arch}.tar"
             docker buildx build \
               --platform "linux/${arch}" \
-              -t "${IMAGE_REPO}/${IMAGE}:${TAG}" \
+              -t "${IMAGE_REPO}/${IMAGE}:${IMAGE_TAG}" \
               -f "${CONTEXT}/${DOCKERFILE}" \
               ${{ matrix.build_args }} \
               --output "type=docker,dest=${out}" \
@@ -125,11 +125,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # TAG="${{ needs.prepare-release.outputs.tag }}"
-          TAG="latest"
+          RELEASE_TAG="${{ needs.prepare-release.outputs.tag }}"
           REPO_SLUG="${{ needs.prepare-release.outputs.repo_slug }}"
           IMAGE="${{ matrix.image }}"
-          (cd /mnt/dist && sha256sum "${REPO_SLUG}-${IMAGE}-${TAG}-"*.tar > "SHA256SUMS-${IMAGE}.txt")
+          (cd /mnt/dist && sha256sum "${REPO_SLUG}-${IMAGE}-${RELEASE_TAG}-"*.tar > "SHA256SUMS-${IMAGE}.txt")
 
       - name: Upload workflow artifact (${{ matrix.image }})
         uses: actions/upload-artifact@v4
