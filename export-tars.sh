@@ -23,6 +23,7 @@ Notes:
       ${IMAGE_REPO}/hdf5:${TAG}
       nginx:1.25-alpine
       emqx/emqx:5.3.1
+  - By default this script removes the above images after exporting; pass --keep-images to skip cleanup.
 EOF
 }
 
@@ -53,11 +54,6 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! docker buildx version >/dev/null 2>&1; then
-  echo "docker buildx not available (need Docker Buildx)"
-  exit 1
-fi
-
 mkdir -p "$OUT_DIR"
 
 sanitize_filename() {
@@ -68,6 +64,10 @@ export_one_arch() {
   local arch="$1"
 
   if [[ "$SKIP_BUILD" != "1" ]]; then
+    if ! docker buildx version >/dev/null 2>&1; then
+      echo "docker buildx not available (need Docker Buildx)"
+      exit 1
+    fi
     IMAGE_REPO="$IMAGE_REPO" TAG="$TAG" docker buildx bake -f docker-bake.hcl "tar_${arch}" --load
   fi
 

@@ -19,6 +19,7 @@ services:
       - DB_DIR=/app/data
       - MQTT_BROKER=mqtt
       - MQTT_PORT=1883
+    restart: unless-stopped
 
   mqtt:
     image: emqx/emqx:5.3.1
@@ -35,6 +36,7 @@ services:
       timeout: 5s
       retries: 20
       start_period: 10s
+    restart: unless-stopped
 
   node:
     build:
@@ -79,6 +81,7 @@ services:
       - NEXT_PUBLIC_MQTT_URL=
       - NEXT_PUBLIC_MQTT_PASSWORD=public
       - NEXT_PUBLIC_MQTT_USERNAME=admin
+    restart: unless-stopped
 
   gateway:
     image: nginx:1.25-alpine
@@ -101,6 +104,7 @@ services:
       - MQTT_PORT=8083
     volumes:
       - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+    restart: unless-stopped
 
   hdf5:
     build:
@@ -112,3 +116,4 @@ services:
       - "5000:5000"
     volumes:
       - ./HDF5DataVisualize/databases:/app/databases
+    restart: unless-stopped

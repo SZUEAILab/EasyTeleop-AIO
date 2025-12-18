@@ -115,4 +115,6 @@ if "%KEEP_IMAGES%"=="0" (
     "nginx:1.25-alpine" ^
     "emqx/emqx:5.3.1" >nul 2>&1
 )
+
+echo Delete: %OUT_TAR%
 exit /b 0
