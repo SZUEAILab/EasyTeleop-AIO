@@ -94,22 +94,18 @@ target "_amd64" {
 
 target "backend_amd64" {
   inherits = ["backend", "_amd64"]
-  tags     = ["${IMAGE_REPO}/backend:${TAG}-amd64"]
 }
 
 target "node_amd64" {
   inherits = ["node", "_amd64"]
-  tags     = ["${IMAGE_REPO}/node:${TAG}-amd64"]
 }
 
 target "frontend_amd64" {
   inherits = ["frontend", "_amd64"]
-  tags     = ["${IMAGE_REPO}/frontend:${TAG}-amd64"]
 }
 
 target "hdf5_amd64" {
   inherits = ["hdf5", "_amd64"]
-  tags     = ["${IMAGE_REPO}/hdf5:${TAG}-amd64"]
 }
 
 group "tar_amd64" {
@@ -122,22 +118,18 @@ target "_arm64" {
 
 target "backend_arm64" {
   inherits = ["backend", "_arm64"]
-  tags     = ["${IMAGE_REPO}/backend:${TAG}-arm64"]
 }
 
 target "node_arm64" {
   inherits = ["node", "_arm64"]
-  tags     = ["${IMAGE_REPO}/node:${TAG}-arm64"]
 }
 
 target "frontend_arm64" {
   inherits = ["frontend", "_arm64"]
-  tags     = ["${IMAGE_REPO}/frontend:${TAG}-arm64"]
 }
 
 target "hdf5_arm64" {
   inherits = ["hdf5", "_arm64"]
-  tags     = ["${IMAGE_REPO}/hdf5:${TAG}-arm64"]
 }
 
 group "tar_arm64" {

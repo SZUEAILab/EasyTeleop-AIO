@@ -135,11 +135,13 @@ chmod +x ./export-tars.sh
 ./export-tars.sh --image-repo easyteleop --tag latest --out-dir dist
 ```
 
+默认导出完成后会清理本地用于打包的镜像（节省磁盘空间）；如需保留，加 `--keep-images`。
+
 每个架构的 tar 包包含 6 个镜像：
 
-- `${IMAGE_REPO}/backend:${TAG}-${arch}`
-- `${IMAGE_REPO}/node:${TAG}-${arch}`
-- `${IMAGE_REPO}/frontend:${TAG}-${arch}`
-- `${IMAGE_REPO}/hdf5:${TAG}-${arch}`
-- `nginx:1.25-alpine-${arch}`
-- `emqx/emqx:5.3.1-${arch}`
+- `${IMAGE_REPO}/backend:${TAG}`
+- `${IMAGE_REPO}/node:${TAG}`
+- `${IMAGE_REPO}/frontend:${TAG}`
+- `${IMAGE_REPO}/hdf5:${TAG}`
+- `nginx:1.25-alpine`
+- `emqx/emqx:5.3.1`

@@ -6,7 +6,7 @@ usage() {
 Export EasyTeleop images to offline tarballs (amd64/arm64).
 
 Usage:
-  ./export-tars.sh [-r IMAGE_REPO] [-t TAG] [-o OUT_DIR] [-a amd64|arm64|both] [--skip-build] [--skip-pull]
+  ./export-tars.sh [-r IMAGE_REPO] [-t TAG] [-o OUT_DIR] [-a amd64|arm64|both] [--skip-build] [--skip-pull] [--keep-images]
 
 Defaults:
   IMAGE_REPO=easyteleop
@@ -17,12 +17,12 @@ Defaults:
 Notes:
   - Produces 2 tar files by default: one for amd64, one for arm64.
   - Each tar contains 6 images:
-      ${IMAGE_REPO}/backend:${TAG}-${arch}
-      ${IMAGE_REPO}/node:${TAG}-${arch}
-      ${IMAGE_REPO}/frontend:${TAG}-${arch}
-      ${IMAGE_REPO}/hdf5:${TAG}-${arch}
-      nginx:1.25-alpine-${arch}
-      emqx/emqx:5.3.1-${arch}
+      ${IMAGE_REPO}/backend:${TAG}
+      ${IMAGE_REPO}/node:${TAG}
+      ${IMAGE_REPO}/frontend:${TAG}
+      ${IMAGE_REPO}/hdf5:${TAG}
+      nginx:1.25-alpine
+      emqx/emqx:5.3.1
 EOF
 }
 
@@ -32,6 +32,7 @@ OUT_DIR="dist"
 ARCH="both"
 SKIP_BUILD="0"
 SKIP_PULL="0"
+CLEANUP_IMAGES="1"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -41,6 +42,7 @@ while [[ $# -gt 0 ]]; do
     -a|--arch) ARCH="$2"; shift 2 ;;
     --skip-build) SKIP_BUILD="1"; shift ;;
     --skip-pull) SKIP_PULL="1"; shift ;;
+    --keep-images) CLEANUP_IMAGES="0"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown arg: $1"; usage; exit 2 ;;
   esac
@@ -71,11 +73,8 @@ export_one_arch() {
 
   if [[ "$SKIP_PULL" != "1" ]]; then
     docker pull --platform "linux/${arch}" "nginx:1.25-alpine"
-    docker tag "nginx:1.25-alpine" "nginx:1.25-alpine-${arch}"
 
     docker pull --platform "linux/${arch}" "emqx/emqx:5.3.1"
-    docker tag "emqx/emqx:5.3.1" "emqx/emqx:5.3.1-${arch}"
-
   fi
 
   local repo_slug
@@ -83,14 +82,24 @@ export_one_arch() {
   local out_tar="${OUT_DIR}/${repo_slug}-${TAG}-${arch}.tar"
 
   docker save -o "$out_tar" \
-    "${IMAGE_REPO}/backend:${TAG}-${arch}" \
-    "${IMAGE_REPO}/node:${TAG}-${arch}" \
-    "${IMAGE_REPO}/frontend:${TAG}-${arch}" \
-    "${IMAGE_REPO}/hdf5:${TAG}-${arch}" \
-    "nginx:1.25-alpine-${arch}" \
-    "emqx/emqx:5.3.1-${arch}"
+    "${IMAGE_REPO}/backend:${TAG}" \
+    "${IMAGE_REPO}/node:${TAG}" \
+    "${IMAGE_REPO}/frontend:${TAG}" \
+    "${IMAGE_REPO}/hdf5:${TAG}" \
+    "nginx:1.25-alpine" \
+    "emqx/emqx:5.3.1"
 
   echo "Wrote: $out_tar"
+
+  if [[ "$CLEANUP_IMAGES" == "1" ]]; then
+    docker image rm -f \
+      "${IMAGE_REPO}/backend:${TAG}" \
+      "${IMAGE_REPO}/node:${TAG}" \
+      "${IMAGE_REPO}/frontend:${TAG}" \
+      "${IMAGE_REPO}/hdf5:${TAG}" \
+      "nginx:1.25-alpine" \
+      "emqx/emqx:5.3.1" >/dev/null 2>&1 || true
+  fi
 }
 
 case "$ARCH" in

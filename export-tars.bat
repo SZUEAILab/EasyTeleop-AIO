@@ -3,7 +3,7 @@ setlocal enabledelayedexpansion
 
 rem Export EasyTeleop images to offline tarballs (amd64/arm64).
 rem Usage:
-rem   export-tars.bat [--image-repo REPO] [--tag TAG] [--out-dir DIR] [--arch amd64|arm64|both] [--skip-build] [--skip-pull]
+rem   export-tars.bat [--image-repo REPO] [--tag TAG] [--out-dir DIR] [--arch amd64|arm64|both] [--skip-build] [--skip-pull] [--keep-images]
 rem Defaults: REPO=easyteleop TAG=latest DIR=dist ARCH=both
 
 set "IMAGE_REPO=easyteleop"
@@ -12,6 +12,7 @@ set "OUT_DIR=dist"
 set "ARCH=both"
 set "SKIP_BUILD=0"
 set "SKIP_PULL=0"
+set "KEEP_IMAGES=0"
 
 :parse
 if "%~1"=="" goto parsed
@@ -25,6 +26,7 @@ if /I "%~1"=="-a"      (set "ARCH=%~2" & shift & shift & goto parse)
 if /I "%~1"=="--arch"  (set "ARCH=%~2" & shift & shift & goto parse)
 if /I "%~1"=="--skip-build" (set "SKIP_BUILD=1" & shift & goto parse)
 if /I "%~1"=="--skip-pull"  (set "SKIP_PULL=1" & shift & goto parse)
+if /I "%~1"=="--keep-images" (set "KEEP_IMAGES=1" & shift & goto parse)
 if /I "%~1"=="-h" goto help
 if /I "%~1"=="--help" goto help
 
@@ -35,7 +37,7 @@ goto help
 echo Export EasyTeleop images to offline tarballs (amd64/arm64)
 echo.
 echo Usage:
-echo   export-tars.bat [--image-repo REPO] [--tag TAG] [--out-dir DIR] [--arch amd64^|arm64^|both] [--skip-build] [--skip-pull]
+echo   export-tars.bat [--image-repo REPO] [--tag TAG] [--out-dir DIR] [--arch amd64^|arm64^|both] [--skip-build] [--skip-pull] [--keep-images]
 echo.
 echo Examples:
 echo   export-tars.bat --image-repo easyteleop --tag latest --out-dir dist --arch both
@@ -80,12 +82,8 @@ if "%SKIP_BUILD%"=="0" (
 if "%SKIP_PULL%"=="0" (
   docker pull --platform linux/%ONEARCH% nginx:1.25-alpine
   if errorlevel 1 exit /b 1
-  docker tag nginx:1.25-alpine nginx:1.25-alpine-%ONEARCH%
-  if errorlevel 1 exit /b 1
 
   docker pull --platform linux/%ONEARCH% emqx/emqx:5.3.1
-  if errorlevel 1 exit /b 1
-  docker tag emqx/emqx:5.3.1 emqx/emqx:5.3.1-%ONEARCH%
   if errorlevel 1 exit /b 1
 
 )
@@ -97,13 +95,24 @@ set "REPO_SLUG=%REPO_SLUG::=_%"
 set "OUT_TAR=%OUT_DIR%\%REPO_SLUG%-%TAG%-%ONEARCH%.tar"
 
 docker save -o "%OUT_TAR%" ^
-  "%IMAGE_REPO%/backend:%TAG%-%ONEARCH%" ^
-  "%IMAGE_REPO%/node:%TAG%-%ONEARCH%" ^
-  "%IMAGE_REPO%/frontend:%TAG%-%ONEARCH%" ^
-  "%IMAGE_REPO%/hdf5:%TAG%-%ONEARCH%" ^
-  "nginx:1.25-alpine-%ONEARCH%" ^
-  "emqx/emqx:5.3.1-%ONEARCH%"
+  "%IMAGE_REPO%/backend:%TAG%" ^
+  "%IMAGE_REPO%/node:%TAG%" ^
+  "%IMAGE_REPO%/frontend:%TAG%" ^
+  "%IMAGE_REPO%/hdf5:%TAG%" ^
+  "nginx:1.25-alpine" ^
+  "emqx/emqx:5.3.1"
 if errorlevel 1 exit /b 1
 
 echo Wrote: %OUT_TAR%
+
+if "%KEEP_IMAGES%"=="0" (
+  rem Best-effort cleanup; ignore failures (e.g. images in use).
+  docker image rm -f ^
+    "%IMAGE_REPO%/backend:%TAG%" ^
+    "%IMAGE_REPO%/node:%TAG%" ^
+    "%IMAGE_REPO%/frontend:%TAG%" ^
+    "%IMAGE_REPO%/hdf5:%TAG%" ^
+    "nginx:1.25-alpine" ^
+    "emqx/emqx:5.3.1" >nul 2>&1
+)
 exit /b 0
