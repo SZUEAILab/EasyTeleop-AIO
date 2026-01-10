@@ -14,9 +14,19 @@ on:
         description: "Image repo prefix inside tar (default: easyteleop)"
         required: false
         type: string
+      push_packages:
+        description: "Push multi-arch images to GitHub Packages (GHCR)"
+        required: false
+        type: boolean
+        default: false
+      package_image_repo:
+        description: "Image repo for pushed packages (default: ghcr.io/<owner>/easyteleop)"
+        required: false
+        type: string
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   prepare-release:
@@ -25,6 +35,8 @@ jobs:
       tag: ${{ steps.vars.outputs.tag }}
       image_repo: ${{ steps.vars.outputs.image_repo }}
       repo_slug: ${{ steps.vars.outputs.repo_slug }}
+      push_packages: ${{ steps.vars.outputs.push_packages }}
+      package_image_repo: ${{ steps.vars.outputs.package_image_repo }}
     steps:
       - name: Set vars
         id: vars
@@ -45,6 +57,23 @@ jobs:
 
           repo_slug="$(echo "${IMAGE_REPO_INPUT}" | sed -E 's#[^A-Za-z0-9_.-]+#_#g')"
           echo "repo_slug=${repo_slug}" >> "$GITHUB_OUTPUT"
+
+          PUSH_PACKAGES="false"
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            PUSH_PACKAGES="true"
+          else
+            if [[ "${{ inputs.push_packages }}" == "true" ]]; then
+              PUSH_PACKAGES="true"
+            fi
+          fi
+          echo "push_packages=${PUSH_PACKAGES}" >> "$GITHUB_OUTPUT"
+
+          PACKAGE_IMAGE_REPO_INPUT="${{ inputs.package_image_repo }}"
+          if [[ -z "${PACKAGE_IMAGE_REPO_INPUT}" ]]; then
+            PACKAGE_IMAGE_REPO_INPUT="ghcr.io/${GITHUB_REPOSITORY_OWNER}/easyteleop"
+          fi
+          PACKAGE_IMAGE_REPO_INPUT="$(echo "${PACKAGE_IMAGE_REPO_INPUT}" | tr '[:upper:]' '[:lower:]')"
+          echo "package_image_repo=${PACKAGE_IMAGE_REPO_INPUT}" >> "$GITHUB_OUTPUT"
 
       - name: Create/Update GitHub Release
         uses: softprops/action-gh-release@v2
@@ -146,3 +175,40 @@ jobs:
           files: |
             /mnt/dist/${{ needs.prepare-release.outputs.repo_slug }}-${{ matrix.image }}-${{ needs.prepare-release.outputs.tag }}-*.tar
             /mnt/dist/SHA256SUMS-${{ matrix.image }}.txt
+
+  push-packages:
+    needs: prepare-release
+    if: ${{ needs.prepare-release.outputs.push_packages == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: ${{ startsWith(needs.prepare-release.outputs.package_image_repo, 'ghcr.io/') }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push multi-arch images
+        shell: bash
+        env:
+          IMAGE_REPO: ${{ needs.prepare-release.outputs.package_image_repo }}
+          TAG: ${{ needs.prepare-release.outputs.tag }}
+          NEXT_PUBLIC_API_URL: /api
+          NEXT_PUBLIC_MQTT_URL: ""
+          NEXT_PUBLIC_MQTT_USERNAME: admin
+          NEXT_PUBLIC_MQTT_PASSWORD: public
+        run: |
+          set -euo pipefail
+          docker buildx bake -f docker-bake.hcl multi --push
