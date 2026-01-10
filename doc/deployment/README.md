@@ -11,3 +11,10 @@
 - 多机集群（控制机 + 多边缘机）：`doc/deployment/cluster-multihost.md`
 - 离线 tar（导出/导入/启动）：`doc/deployment/offline-tars.md`
 - `docker-compose.yml` 参考：`doc/deployment/docker-compose.md`
+
+## GitHub Pages
+
+如果你要在 GitHub Pages 上浏览本目录内容，本仓库已提供 MkDocs 配置与部署工作流：
+
+- 配置：`mkdocs.yml`
+- 工作流：`.github/workflows/docs-pages.yml`

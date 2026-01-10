@@ -1,0 +1,57 @@
+site_name: EasyTeleop-AIO Docs
+site_description: EasyTeleop-AIO documentation
+repo_url: https://github.com/SZUEAILab/EasyTeleop-AIO
+repo_name: SZUEAILab/EasyTeleop-AIO
+
+docs_dir: doc
+site_dir: site
+
+theme:
+  name: material
+  language: zh
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+nav:
+  - 首页: index.md
+  - 部署:
+      - 概览: deployment/README.md
+      - 单机 AIO: deployment/aio-single.md
+      - 多机集群: deployment/cluster-multihost.md
+      - Compose 参考: deployment/docker-compose.md
+      - 离线镜像: deployment/offline-tars.md
+  - 开发:
+      - 本地开发: development.md
+      - 脚本说明: scripts.md
+  - 架构与运维:
+      - 架构与数据流: architecture.md
+      - 服务清单: services.md
+      - 网关路由: nginx-gateway.md
+      - 安全建议: security.md
+      - 故障排查: troubleshooting.md
+  - 模块:
+      - 概览: modules/README.md
+      - 后端（Python）: modules/backend-python.md
+      - 节点（Node）: modules/node.md
+      - Node 协议: modules/node-protocol.md
+      - 前端（UI）: modules/frontend.md
+      - HDF5 服务: modules/hdf5.md
+  - 发布:
+      - 发布与 CI: release-ci.md
+

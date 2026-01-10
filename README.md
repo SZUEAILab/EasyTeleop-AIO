@@ -8,6 +8,7 @@ EasyTeleop 系统一键部署解决方案，集成了必要组件与服务，简
 - 部署（单机/多机）：`doc/deployment/README.md`
 - 快速开始：`doc/quickstart.md`
 - 配置说明：`doc/configuration.md`
+- GitHub Pages 文档站：启用后见仓库 Pages
 
 ## 项目概述
 
