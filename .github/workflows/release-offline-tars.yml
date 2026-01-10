@@ -72,6 +72,7 @@ jobs:
           if [[ -z "${PACKAGE_IMAGE_REPO_INPUT}" ]]; then
             PACKAGE_IMAGE_REPO_INPUT="ghcr.io/${GITHUB_REPOSITORY_OWNER}/easyteleop"
           fi
+          PACKAGE_IMAGE_REPO_INPUT="$(echo "${PACKAGE_IMAGE_REPO_INPUT}" | tr '[:upper:]' '[:lower:]')"
           echo "package_image_repo=${PACKAGE_IMAGE_REPO_INPUT}" >> "$GITHUB_OUTPUT"
 
       - name: Create/Update GitHub Release
