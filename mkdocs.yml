@@ -29,7 +29,10 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 
 nav:
-  - 首页: index.md
+  - 首页: README.md
+  - 入门:
+      - 快速开始: quickstart.md
+      - 配置说明: configuration.md
   - 部署:
       - 概览: deployment/README.md
       - 单机 AIO: deployment/aio-single.md
@@ -54,4 +57,3 @@ nav:
       - HDF5 服务: modules/hdf5.md
   - 发布:
       - 发布与 CI: release-ci.md
-

@@ -4,9 +4,8 @@
 
 ## 模块入口
 
-- 后端（Python）：`doc/modules/backend-python.md`
-- 节点（Node）：`doc/modules/node.md`
-- Node 协议：`doc/modules/node-protocol.md`
-- 前端（UI）：`doc/modules/frontend.md`
-- HDF5 服务：`doc/modules/hdf5.md`
-
+- 后端（Python）：`backend-python.md`
+- 节点（Node）：`node.md`
+- Node 协议：`node-protocol.md`
+- 前端（UI）：`frontend.md`
+- HDF5 服务：`hdf5.md`

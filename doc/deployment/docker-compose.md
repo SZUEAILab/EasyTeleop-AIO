@@ -2,9 +2,9 @@
 
 本文件聚焦于 `docker-compose.yml` 的使用与可配置项。
 
-- 单机 AIO 部署说明（含拓扑与职责）：`doc/deployment/aio-single.md`
-- 多机集群部署说明：`doc/deployment/cluster-multihost.md`
-- 部署目录入口：`doc/deployment/README.md`
+- 单机 AIO 部署说明（含拓扑与职责）：`aio-single.md`
+- 多机集群部署说明：`cluster-multihost.md`
+- 部署目录入口：`README.md`
 
 ## 快速命令
 
@@ -43,7 +43,7 @@ docker compose down
 
 ### 1) `node` 权限
 
-`node` 在 compose 中默认启用 `privileged: true` 以方便硬件接入；生产环境建议最小化权限并用 `devices:` 显式映射设备，见 `doc/security.md`。
+`node` 在 compose 中默认启用 `privileged: true` 以方便硬件接入；生产环境建议最小化权限并用 `devices:` 显式映射设备，见 `../security.md`。
 
 ### 2) 前端配置（`NEXT_PUBLIC_*`）
 
@@ -54,7 +54,7 @@ docker compose down
 - `NEXT_PUBLIC_MQTT_USERNAME`：默认 `admin`
 - `NEXT_PUBLIC_MQTT_PASSWORD`：默认 `public`
 
-更多见：`doc/configuration.md`、`doc/modules/frontend.md`
+更多见：`../configuration.md`、`../modules/frontend.md`
 
 ### 3) 网关路由
 
@@ -64,4 +64,4 @@ docker compose down
 - `/api/` → `backend:8000/`
 - `/mqtt/` → `mqtt:8083/mqtt/`
 
-更多见：`doc/nginx-gateway.md`
+更多见：`../nginx-gateway.md`

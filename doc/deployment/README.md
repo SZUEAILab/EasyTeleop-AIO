@@ -7,10 +7,10 @@
 
 ## 入口文档
 
-- 单机 AIO（Compose）：`doc/deployment/aio-single.md`
-- 多机集群（控制机 + 多边缘机）：`doc/deployment/cluster-multihost.md`
-- 离线 tar（导出/导入/启动）：`doc/deployment/offline-tars.md`
-- `docker-compose.yml` 参考：`doc/deployment/docker-compose.md`
+- 单机 AIO（Compose）：`aio-single.md`
+- 多机集群（控制机 + 多边缘机）：`cluster-multihost.md`
+- 离线 tar（导出/导入/启动）：`offline-tars.md`
+- `docker-compose.yml` 参考：`docker-compose.md`
 
 ## GitHub Pages
 
