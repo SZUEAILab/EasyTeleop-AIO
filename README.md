@@ -230,13 +230,61 @@ git submodule update --remote --merge
 
 ### 多架构镜像（buildx bake）
 
-构建并推送多架构镜像（amd64+arm64）：
+构建并推送多架构镜像（amd64+arm64）。按目标仓库分为三种情况：
+
+1) **官方（Docker Hub）**
 
 ```powershell
-$env:IMAGE_REPO="docker.io/<user>"   # 或 "ghcr.io/<org>"
+docker login
+$env:IMAGE_REPO="docker.io/<user>/easyteleop"
 $env:TAG="v1.0.0"
 docker buildx bake -f docker-bake.hcl multi --push
 ```
+
+2) **GitHub（GHCR）**
+
+```powershell
+docker login ghcr.io -u <github_user>
+$env:IMAGE_REPO="ghcr.io/<org_or_user>/easyteleop"
+$env:TAG="v1.0.0"
+docker buildx bake -f docker-bake.hcl multi --push
+```
+
+3) **私有 Docker Registry**
+
+```powershell
+docker login xxxx.xxx.xxx
+$env:IMAGE_REPO="xxxx.xxx.xxx/<namespace>/easyteleop"
+$env:TAG="v1.0.0"
+docker buildx bake -f docker-bake.hcl multi --push
+```
+
+如果本地执行时报错：
+
+`ERROR: Multi-platform build is not supported for the docker driver`
+
+说明当前 buildx 正在使用 `docker` driver（不支持多架构）。任选其一解决：
+
+1) 创建并切换到 `docker-container` builder（推荐）：
+
+```powershell
+docker buildx create --name easyteleop-multi --driver docker-container --use
+docker buildx inspect --bootstrap
+```
+
+如需跨架构（例如在 amd64 机器上构建 arm64），还需要安装 binfmt/qemu：
+
+```powershell
+docker run --privileged --rm tonistiigi/binfmt --install all
+```
+
+2) 如果使用 Docker Desktop，也可以在设置中开启 *containerd image store*（然后重试构建）。
+
+### CI 发布到私有仓库（docker.szutic.cn）
+
+- 工作流：`.github/workflows/push-packages.yml`（推送 `v*` tag 时自动构建并推送）
+- 需要配置 GitHub Secrets：`DOCKER_REGISTRY_USERNAME`、`DOCKER_REGISTRY_PASSWORD`
+- 如需自定义仓库路径，可在 `workflow_dispatch` 里填写 `package_image_repo`（例如 `docker.szutic.cn/<namespace>/easyteleop`）
 
 ### 离线部署（镜像 tar）
 
